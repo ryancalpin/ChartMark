@@ -53,6 +53,30 @@ function attrsForItem(item: PaletteItem, ctx: InsertContext, alias: string | nul
   };
 }
 
+/** Build attrs for a token pinned to a specific historical value (no live link). */
+function attrsForPinned(
+  item: PaletteItem,
+  value: TokenValue,
+  ctx: InsertContext,
+  alias: string | null,
+): TokenAttrs {
+  return {
+    tokenId: newId(),
+    type: item.type,
+    dataSourceId: null, // pinned to a point-in-time result → does not update live
+    fhirResourceId: item.fhirResourceId,
+    fhirResourceVersion: item.fhirResourceVersion,
+    fetchedAt: value.observedAt ?? ctx.now.toISOString(),
+    draftValue: value,
+    signedValue: null,
+    lockState: "live",
+    overrideValue: null,
+    manuallyOverridden: false,
+    displayLabel: item.label,
+    aliasUsed: alias,
+  };
+}
+
 export function insertTokens(
   view: EditorView,
   from: number,
@@ -60,7 +84,13 @@ export function insertTokens(
   item: PaletteItem,
   ctx: InsertContext,
   alias: string | null,
+  pinnedValue: TokenValue | null = null,
 ): void {
+  if (pinnedValue) {
+    insertAttrs(view, from, to, [attrsForPinned(item, pinnedValue, ctx, alias)], ctx);
+    return;
+  }
+
   // Resolve the list of token attrs (expand macros).
   const attrsList: TokenAttrs[] = item.expandsTo
     ? item.expandsTo.map((id) =>
@@ -80,6 +110,17 @@ export function insertTokens(
       )
     : [attrsForItem(item, ctx, alias)];
 
+  insertAttrs(view, from, to, attrsList, ctx);
+}
+
+/** Replace [from,to] with the given token nodes (joined for readability) + audit. */
+function insertAttrs(
+  view: EditorView,
+  from: number,
+  to: number,
+  attrsList: TokenAttrs[],
+  ctx: InsertContext,
+): void {
   const content: PMNode[] = [];
   attrsList.forEach((attrs, i) => {
     content.push(chartTokenType.create(attrs));
@@ -87,11 +128,9 @@ export function insertTokens(
     content.push(schema.text(i < attrsList.length - 1 ? ", " : " "));
   });
 
-  const tr = view.state.tr.replaceWith(from, to, content);
-  view.dispatch(tr);
+  view.dispatch(view.state.tr.replaceWith(from, to, content));
   view.focus();
 
-  // Audit each created token (non-blocking).
   attrsList.forEach((attrs) => {
     void ctx.audit.recordTokenCreated(
       buildTokenAuditRecord(ctx.noteId, attrs, "created", ctx.actor),
