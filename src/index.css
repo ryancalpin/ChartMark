@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply font-sans text-slate-900 antialiased;
+  margin: 0;
+}
+
+/* --- ProseMirror editing surface ----------------------------------------- */
+
+.cm-editor-mount .ProseMirror {
+  outline: none;
+  min-height: 420px;
+  line-height: 1.7;
+  color: #1e293b;
+}
+
+.cm-editor-mount .ProseMirror h3 {
+  @apply mb-1 mt-5 font-sans text-sm font-semibold uppercase tracking-wide text-slate-500;
+}
+
+.cm-editor-mount .ProseMirror p {
+  margin: 0 0 0.6em;
+}
+
+.cm-editor-mount .ProseMirror p.is-empty::before {
+  color: #cbd5e1;
+}
+
+/* --- Tokens -------------------------------------------------------------- */
+
+/* The host span ProseMirror owns; React renders the chip inside via portal. */
+.cm-token-host {
+  display: inline;
+}
+
+.cm-chip {
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+/* Reveal the override affordance on hover. */
+.cm-chip:hover .cm-edit-affordance {
+  opacity: 0.6;
+}
+
+/* ProseMirror node selection on a token. */
+.cm-token-selected .cm-chip {
+  box-shadow: 0 0 0 2px #3b82f6;
+  border-radius: 0.375rem;
+}
+
+.ProseMirror-selectednode .cm-chip {
+  box-shadow: 0 0 0 2px #3b82f6;
+}

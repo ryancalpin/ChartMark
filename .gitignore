@@ -1,0 +1,20 @@
+node_modules
+dist
+dist-ssr
+*.local
+.env
+.env.*
+!.env.example
+
+# Python audit-service
+__pycache__/
+*.py[cod]
+.venv/
+audit-service/*.db
+
+# Editor / OS
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.log
