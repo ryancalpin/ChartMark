@@ -37,6 +37,25 @@ Twelve seconds after load, the seeded chart updates potassium (3.1 → 3.6) — 
 `@k` token in your note **flashes** and updates live, and signing will surface a
 "value changed" flag in the pre-sign review drawer.
 
+### More to try
+
+- **Disambiguation** — labs with multiple draws show "N draws ▸" in the palette
+  (or press →): pick *Most recent (live)* or pin a specific historical result.
+- **Smart templates** — the **Template…** dropdown loads e.g. "HF Admission Note"
+  with `@furosemide`, `@BNP`, `@weight`, problems, etc. already wired and resolved.
+- **Inline conflict warnings** — a discontinued med (try `@lisinopril`) renders with
+  an amber ⚠ ring right in the note, not just at sign time.
+- **Empty-palette fallback** — search inside a Tab-filtered category with no match
+  offers "search all chart data".
+- **Co-signature** — tick **Co-sign**: "Submit for co-sign" locks content but keeps
+  tokens **live**; the attending's "Co-sign & finalize" freezes them.
+- **Amendments** — after signing, **Add addendum** appends a timestamped, attributed
+  addendum; the original signed content stays immutable (append-only).
+- **Metrics** dashboard — time-to-sign, override rate, changed-at-sign (sign a few
+  notes to populate).
+- **Audit** viewer — admin-only medicolegal provenance trail (data source, FHIR id +
+  version, changed/override flags).
+
 ## Scripts
 
 | Script            | What it does                                          |

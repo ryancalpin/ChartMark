@@ -54,9 +54,11 @@ export function LinkedToken({ attrs }: Props) {
         onClick={() =>
           attrs.dataSourceId && openDetail({ type: attrs.type, dataSourceId: attrs.dataSourceId })
         }
-        className={`${chipClass({ locked: d.locked, flash: d.flash, stale: d.stale })} underline decoration-dotted underline-offset-2`}
+        className={`${chipClass({ locked: d.locked, flash: d.flash, stale: d.stale, conflict: d.conflict })} underline decoration-dotted underline-offset-2`}
         style={chipStyle(d.colors)}
+        title={d.conflictMessage ?? undefined}
       >
+        {d.conflict && <span aria-label="conflict">⚠</span>}
         <span aria-hidden>{tokenIcon(attrs.type)}</span>
         <span>{display}</span>
         {d.overridden && <span title="overridden">✎</span>}

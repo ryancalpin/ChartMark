@@ -43,7 +43,7 @@ export function signNote(view: EditorView, ctx: SignContext): TokenAttrs[] {
 
   let tr = state.tr;
   for (const u of updates) tr = tr.setNodeMarkup(u.pos, undefined, u.attrs);
-  tr.setMeta(lockStatePluginKey, "signed");
+  tr.setMeta(lockStatePluginKey, { type: "lock" });
   tr.setMeta("addToHistory", false);
   view.dispatch(tr);
 

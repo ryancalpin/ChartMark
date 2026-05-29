@@ -32,10 +32,17 @@ export function PillToken({ attrs, view, getPos }: Props) {
   return (
     <span
       ref={ref}
-      className={chipClass({ locked: d.locked, flash: d.flash, stale: d.stale, allergy: attrs.type === "allergy" })}
+      className={chipClass({
+        locked: d.locked,
+        flash: d.flash,
+        stale: d.stale,
+        allergy: attrs.type === "allergy",
+        conflict: d.conflict,
+      })}
       style={chipStyle(d.colors)}
-      title={d.overridden ? "Manually overridden" : undefined}
+      title={d.conflictMessage ?? (d.overridden ? "Manually overridden" : undefined)}
     >
+      {d.conflict && <span aria-label="conflict">⚠</span>}
       <span aria-hidden>{tokenIcon(attrs.type)}</span>
       <span className="font-mono">{display}</span>
       <AbnormalArrow level={d.value?.abnormal} />

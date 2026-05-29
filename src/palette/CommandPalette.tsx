@@ -168,6 +168,7 @@ export function CommandPalette({ view, mention, keyHandlerRef }: Props) {
       }
       if (e.key === "Enter") {
         if (results[selected]) insert(results[selected]);
+        else if (results.length === 0 && category !== "all") setCategory("all"); // broaden
         return true;
       }
       if (e.key === "Tab") {
@@ -189,7 +190,7 @@ export function CommandPalette({ view, mention, keyHandlerRef }: Props) {
       keyHandlerRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, results, selected, mention.query, disambig, variantSel]);
+  }, [active, results, selected, mention.query, disambig, variantSel, category]);
 
   if (!active) return null;
 
@@ -236,9 +237,23 @@ export function CommandPalette({ view, mention, keyHandlerRef }: Props) {
               onPickVariant={(v) => insertVariantValue(disambig, v)}
             />
           ) : results.length === 0 ? (
-            <div className="px-2 py-3 text-sm text-slate-400">
-              No matches. Try a different term or Tab to broaden category.
-            </div>
+            category !== "all" ? (
+              <button
+                data-token-interactive
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  setCategory("all");
+                }}
+                className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm text-blue-700 hover:bg-blue-50"
+              >
+                <span aria-hidden>🔍</span>
+                <span>
+                  No matches in <span className="capitalize">{category}</span> — search all chart data →
+                </span>
+              </button>
+            ) : (
+              <div className="px-2 py-3 text-sm text-slate-400">No matching chart data.</div>
+            )
           ) : (
             results.map((item, i) => (
               <PaletteItemRow

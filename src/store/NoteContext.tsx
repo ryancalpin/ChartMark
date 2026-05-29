@@ -1,16 +1,21 @@
 /**
- * Note metadata + status. The note body lives in the ProseMirror document; this
- * holds the surrounding lifecycle state (draft/signed, signer, timestamps) and
- * is updated by the sign command.
+ * Note metadata + lifecycle. The note body lives in the ProseMirror document;
+ * this holds status (draft → pending_cosign → signed), signer identities,
+ * timestamps, and addenda. Updated by the sign / co-sign / addendum flows.
  */
 
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
-import type { NoteMeta } from "../types/note";
+import type { Addendum, NoteMeta } from "../types/note";
 import { newId } from "../lib/id";
 
 interface NoteContextValue {
   note: NoteMeta;
+  setTitle: (title: string, type: string) => void;
+  /** Preliminary (resident) signature in a co-sign workflow. */
+  submitForCosign: (by: string) => void;
+  /** Finalizing signature — freezes tokens. */
   sign: (signedBy: string) => void;
+  addAddendum: (author: string, reason: string) => Addendum;
 }
 
 const NoteContext = createContext<NoteContextValue | null>(null);
@@ -31,8 +36,11 @@ function initialNote(): NoteMeta {
     status: "draft",
     createdAt: now,
     openedAt: now,
+    submittedBy: null,
+    submittedAt: null,
     signedAt: null,
     signedBy: null,
+    addenda: [],
   };
 }
 
@@ -42,13 +50,31 @@ export function NoteProvider({ children }: { children: ReactNode }) {
   const value = useMemo<NoteContextValue>(
     () => ({
       note,
-      sign: (signedBy: string) =>
+      setTitle: (title, type) => setNote((n) => ({ ...n, title, type })),
+      submitForCosign: (by) =>
+        setNote((n) => ({
+          ...n,
+          status: "pending_cosign",
+          submittedBy: by,
+          submittedAt: new Date().toISOString(),
+        })),
+      sign: (signedBy) =>
         setNote((n) => ({
           ...n,
           status: "signed",
           signedAt: new Date().toISOString(),
           signedBy,
         })),
+      addAddendum: (author, reason) => {
+        const addendum: Addendum = {
+          id: newId("add"),
+          author,
+          reason,
+          createdAt: new Date().toISOString(),
+        };
+        setNote((n) => ({ ...n, addenda: [...n.addenda, addendum] }));
+        return addendum;
+      },
     }),
     [note],
   );

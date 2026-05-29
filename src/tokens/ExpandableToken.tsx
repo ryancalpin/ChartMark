@@ -58,9 +58,11 @@ export function ExpandableToken({ attrs, view, getPos }: Props) {
         role="button"
         tabIndex={0}
         onClick={() => setOpen((o) => !o)}
-        className={chipClass({ locked: d.locked, flash: d.flash, stale: d.stale })}
+        className={chipClass({ locked: d.locked, flash: d.flash, stale: d.stale, conflict: d.conflict })}
         style={chipStyle(d.colors)}
+        title={d.conflictMessage ?? undefined}
       >
+        {d.conflict && <span aria-label="conflict">⚠</span>}
         <span aria-hidden>{tokenIcon(attrs.type)}</span>
         <span className="font-mono">{display}</span>
         <AbnormalArrow level={value?.abnormal} />

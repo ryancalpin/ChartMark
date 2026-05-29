@@ -26,6 +26,9 @@ export interface TokenDisplay {
   relative: string;
   /** Order/status reported by the chart for this entity (e.g. discontinued). */
   status: TokenValue["status"];
+  /** A blocking-worthy problem with this token (discontinued med / unresolved). */
+  conflict: boolean;
+  conflictMessage: string | null;
 }
 
 export function useTokenDisplay(attrs: TokenAttrs): TokenDisplay {
@@ -52,6 +55,16 @@ export function useTokenDisplay(attrs: TokenAttrs): TokenDisplay {
   const colors = tokenColors(attrs.type, value, stale);
   const relative = relativeTime(value?.observedAt, now);
 
+  // Inline conflicts surfaced in the editor (not just at sign time).
+  const unresolved = !value && !!attrs.dataSourceId;
+  const discontinued = attrs.type === "medication" && value?.status === "discontinued";
+  const conflict = !locked && (unresolved || !!discontinued);
+  const conflictMessage = !conflict
+    ? null
+    : discontinued
+      ? "This medication order was discontinued. Update or remove before signing."
+      : "This data is no longer available. Update or remove before signing.";
+
   return {
     value,
     colors,
@@ -62,5 +75,7 @@ export function useTokenDisplay(attrs: TokenAttrs): TokenDisplay {
     changedSinceOpen,
     relative,
     status: value?.status,
+    conflict,
+    conflictMessage,
   };
 }

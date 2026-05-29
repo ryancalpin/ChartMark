@@ -13,7 +13,8 @@ import type { ValueSnapshot } from "../../data/ChartDataService";
 import type { AuditService } from "../../types/audit";
 import { schema, chartTokenType } from "../schema";
 import { newId } from "../../lib/id";
-import { resolveDateToken, type DateTokenKind } from "../../lib/dates";
+import { type DateTokenKind } from "../../lib/dates";
+import { resolvedTokenAttrs } from "./buildToken";
 import { buildTokenAuditRecord } from "../../store/AuditContext";
 
 export interface InsertContext {
@@ -25,32 +26,19 @@ export interface InsertContext {
   actor: string;
 }
 
-function dateValue(item: PaletteItem, ctx: InsertContext): TokenValue {
-  const kind = item.dataSourceId.replace("date-", "") as DateTokenKind;
-  return { display: resolveDateToken(kind, ctx.now, ctx.admitDate), dateKind: kind };
-}
-
 /** Build the attrs for one token from a (non-macro) palette item. */
 function attrsForItem(item: PaletteItem, ctx: InsertContext, alias: string | null): TokenAttrs {
-  const isDate = item.type === "date";
-  const snapshot = isDate ? null : ctx.getValue(item.dataSourceId);
-  const draftValue = isDate ? dateValue(item, ctx) : (snapshot?.value ?? null);
-
-  return {
-    tokenId: newId(),
+  return resolvedTokenAttrs({
     type: item.type,
-    dataSourceId: isDate ? null : item.dataSourceId,
-    fhirResourceId: snapshot?.fhirResourceId ?? null,
-    fhirResourceVersion: snapshot?.fhirResourceVersion ?? null,
-    fetchedAt: snapshot?.fetchedAt ?? ctx.now.toISOString(),
-    draftValue,
-    signedValue: null,
-    lockState: "live",
-    overrideValue: null,
-    manuallyOverridden: false,
-    displayLabel: item.label,
-    aliasUsed: alias,
-  };
+    dataSourceId: item.type === "date" ? null : item.dataSourceId,
+    label: item.label,
+    getValue: ctx.getValue,
+    now: ctx.now,
+    admitDate: ctx.admitDate,
+    alias,
+    dateKind:
+      item.type === "date" ? (item.dataSourceId.replace("date-", "") as DateTokenKind) : undefined,
+  });
 }
 
 /** Build attrs for a token pinned to a specific historical value (no live link). */

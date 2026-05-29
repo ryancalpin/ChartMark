@@ -138,4 +138,35 @@ const medItem = items.find((i) => i.type === "medication");
 assert.ok(medItem && !medItem.variants, "medications have no draw variants");
 ok("disambiguation: potassium draws newest-first with pinned values");
 
+// --- smart templates -----------------------------------------------------
+const { buildTemplateDoc } = await import("../src/templates/templates");
+const { TEMPLATES } = await import("../src/templates/templates");
+const hf = TEMPLATES.find((t) => t.id === "hf-admission")!;
+const noopAudit = {
+  recordTokenCreated: async () => {},
+  recordLiveChange: async () => {},
+  recordOverride: async () => {},
+  recordSigning: async () => {},
+  recordAck: async () => {},
+};
+const tdoc = buildTemplateDoc(hf, {
+  getValue: (id: string) => svc.getValue(id),
+  now,
+  admitDate: now.toISOString(),
+  audit: noopAudit,
+  noteId: "note-x",
+  actor: "tester",
+});
+let tokenNodes = 0;
+let resolved = 0;
+tdoc.descendants((n: { type: { name: string }; attrs: TokenAttrs }) => {
+  if (n.type.name === "chart_token") {
+    tokenNodes++;
+    if (n.attrs.draftValue) resolved++;
+  }
+});
+assert.ok(tokenNodes >= 10, `HF template wires many tokens, got ${tokenNodes}`);
+assert.equal(tokenNodes, resolved, "every template slot resolved to a live value");
+ok(`smart template wires ${tokenNodes} pre-resolved tokens`);
+
 console.log(`\nAll smoke checks passed (${passed} groups).`);
