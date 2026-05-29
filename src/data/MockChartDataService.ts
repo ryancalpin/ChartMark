@@ -6,8 +6,8 @@
  * pre-sign "value changed" trigger.
  */
 
-import type { Chart } from "../types/chart";
-import type { PaletteItem } from "../types/palette";
+import type { Chart, LabResult } from "../types/chart";
+import type { PaletteItem, PaletteVariant } from "../types/palette";
 import type { TokenType, TokenValue } from "../types/tokens";
 import { ENTITY_ALIASES, PANEL_MACROS } from "../fixtures/aliases";
 import { johnDoeChart } from "../fixtures/patient-john-doe";
@@ -32,6 +32,32 @@ interface EntityRecord {
   fhirResourceVersion: string;
   value: TokenValue;
   acuity?: "acute" | "routine";
+  variants?: PaletteVariant[];
+}
+
+/** Build one disambiguation variant per historical draw of a lab. */
+function labVariants(l: LabResult): PaletteVariant[] | undefined {
+  if (l.trend.length < 2) return undefined;
+  return [...l.trend].reverse().map((pt) => {
+    const abnormal = classifyAbnormal(pt.v, l.referenceRange);
+    const arrow = abnormalArrow(abnormal);
+    return {
+      id: `${l.id}@${pt.t}`,
+      observedAt: pt.t,
+      label: new Date(pt.t).toLocaleString(),
+      valueDisplay: `${pt.v} ${l.unit}${arrow ? ` ${arrow}` : ""}`,
+      value: {
+        display: `${l.name} ${pt.v} ${l.unit}`,
+        numeric: pt.v,
+        unit: l.unit,
+        abnormal,
+        referenceRange: l.referenceRange,
+        observedAt: pt.t,
+        status: "final",
+        trend: l.trend,
+      },
+    };
+  });
 }
 
 export class MockChartDataService implements ChartDataService {
@@ -88,6 +114,7 @@ export class MockChartDataService implements ChartDataService {
         dataSourceId: e.dataSourceId,
         fhirResourceId: e.fhirResourceId,
         fhirResourceVersion: e.fhirResourceVersion,
+        variants: e.variants,
       });
     }
 
@@ -194,6 +221,7 @@ export class MockChartDataService implements ChartDataService {
         fhirResourceVersion: l.fhirResourceVersion,
         value: labToValue(l),
         acuity: l.acuity,
+        variants: labVariants(l),
       });
     }
     for (const v of this.chart.vitals) {

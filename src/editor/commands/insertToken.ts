@@ -13,7 +13,8 @@ import type { ValueSnapshot } from "../../data/ChartDataService";
 import type { AuditService } from "../../types/audit";
 import { schema, chartTokenType } from "../schema";
 import { newId } from "../../lib/id";
-import { resolveDateToken, type DateTokenKind } from "../../lib/dates";
+import { type DateTokenKind } from "../../lib/dates";
+import { resolvedTokenAttrs } from "./buildToken";
 import { buildTokenAuditRecord } from "../../store/AuditContext";
 
 export interface InsertContext {
@@ -25,25 +26,36 @@ export interface InsertContext {
   actor: string;
 }
 
-function dateValue(item: PaletteItem, ctx: InsertContext): TokenValue {
-  const kind = item.dataSourceId.replace("date-", "") as DateTokenKind;
-  return { display: resolveDateToken(kind, ctx.now, ctx.admitDate), dateKind: kind };
-}
-
 /** Build the attrs for one token from a (non-macro) palette item. */
 function attrsForItem(item: PaletteItem, ctx: InsertContext, alias: string | null): TokenAttrs {
-  const isDate = item.type === "date";
-  const snapshot = isDate ? null : ctx.getValue(item.dataSourceId);
-  const draftValue = isDate ? dateValue(item, ctx) : (snapshot?.value ?? null);
+  return resolvedTokenAttrs({
+    type: item.type,
+    dataSourceId: item.type === "date" ? null : item.dataSourceId,
+    label: item.label,
+    getValue: ctx.getValue,
+    now: ctx.now,
+    admitDate: ctx.admitDate,
+    alias,
+    dateKind:
+      item.type === "date" ? (item.dataSourceId.replace("date-", "") as DateTokenKind) : undefined,
+  });
+}
 
+/** Build attrs for a token pinned to a specific historical value (no live link). */
+function attrsForPinned(
+  item: PaletteItem,
+  value: TokenValue,
+  ctx: InsertContext,
+  alias: string | null,
+): TokenAttrs {
   return {
     tokenId: newId(),
     type: item.type,
-    dataSourceId: isDate ? null : item.dataSourceId,
-    fhirResourceId: snapshot?.fhirResourceId ?? null,
-    fhirResourceVersion: snapshot?.fhirResourceVersion ?? null,
-    fetchedAt: snapshot?.fetchedAt ?? ctx.now.toISOString(),
-    draftValue,
+    dataSourceId: null, // pinned to a point-in-time result → does not update live
+    fhirResourceId: item.fhirResourceId,
+    fhirResourceVersion: item.fhirResourceVersion,
+    fetchedAt: value.observedAt ?? ctx.now.toISOString(),
+    draftValue: value,
     signedValue: null,
     lockState: "live",
     overrideValue: null,
@@ -60,7 +72,13 @@ export function insertTokens(
   item: PaletteItem,
   ctx: InsertContext,
   alias: string | null,
+  pinnedValue: TokenValue | null = null,
 ): void {
+  if (pinnedValue) {
+    insertAttrs(view, from, to, [attrsForPinned(item, pinnedValue, ctx, alias)], ctx);
+    return;
+  }
+
   // Resolve the list of token attrs (expand macros).
   const attrsList: TokenAttrs[] = item.expandsTo
     ? item.expandsTo.map((id) =>
@@ -80,6 +98,17 @@ export function insertTokens(
       )
     : [attrsForItem(item, ctx, alias)];
 
+  insertAttrs(view, from, to, attrsList, ctx);
+}
+
+/** Replace [from,to] with the given token nodes (joined for readability) + audit. */
+function insertAttrs(
+  view: EditorView,
+  from: number,
+  to: number,
+  attrsList: TokenAttrs[],
+  ctx: InsertContext,
+): void {
   const content: PMNode[] = [];
   attrsList.forEach((attrs, i) => {
     content.push(chartTokenType.create(attrs));
@@ -87,11 +116,9 @@ export function insertTokens(
     content.push(schema.text(i < attrsList.length - 1 ? ", " : " "));
   });
 
-  const tr = view.state.tr.replaceWith(from, to, content);
-  view.dispatch(tr);
+  view.dispatch(view.state.tr.replaceWith(from, to, content));
   view.focus();
 
-  // Audit each created token (non-blocking).
   attrsList.forEach((attrs) => {
     void ctx.audit.recordTokenCreated(
       buildTokenAuditRecord(ctx.noteId, attrs, "created", ctx.actor),

@@ -16,7 +16,7 @@ export function DetailSidePanel() {
   const consult = chart.consults.find((c) => c.id === detail.dataSourceId);
 
   return (
-    <aside className="flex h-full w-80 shrink-0 flex-col border-l border-slate-200 bg-white">
+    <aside className="fixed inset-y-0 right-0 z-30 flex h-full w-80 shrink-0 flex-col border-l border-slate-200 bg-white shadow-2xl lg:static lg:z-auto lg:shadow-none">
       <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
         <h2 className="font-display text-lg text-slate-800">Detail</h2>
         <button onClick={closeDetail} className="text-slate-400 hover:text-slate-700" aria-label="close">

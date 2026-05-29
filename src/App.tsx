@@ -39,8 +39,8 @@ function NoteCanvas() {
   return (
     <main className="flex-1 overflow-y-auto bg-slate-50">
       <PatientBanner />
-      <article className="mx-auto my-6 max-w-3xl rounded-lg border border-slate-200 bg-white px-10 py-8 shadow-sm">
-        <h1 className="mb-4 font-display text-3xl text-slate-900">{note.title}</h1>
+      <article className="mx-auto my-4 max-w-3xl rounded-lg border border-slate-200 bg-white px-4 py-6 shadow-sm sm:my-6 sm:px-10 sm:py-8">
+        <h1 className="mb-4 font-display text-2xl text-slate-900 sm:text-3xl">{note.title}</h1>
         <ChartMarkEditor />
       </article>
     </main>

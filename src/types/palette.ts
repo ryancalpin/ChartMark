@@ -1,6 +1,6 @@
 /** Search palette item shapes. */
 
-import type { TokenType } from "./tokens";
+import type { TokenType, TokenValue } from "./tokens";
 
 export type PaletteCategory =
   | "all"
@@ -36,4 +36,22 @@ export interface PaletteItem {
    * of these dataSourceIds instead of for `dataSourceId`. e.g. @bmp.
    */
   expandsTo?: string[];
+  /**
+   * Disambiguation: prior occurrences of this same-named item (e.g. multiple
+   * potassium draws). When present and >1, the palette offers a sub-list so the
+   * provider can pin a specific historical result instead of the live value.
+   */
+  variants?: PaletteVariant[];
+}
+
+/** One historical occurrence of a palette item, for disambiguation. */
+export interface PaletteVariant {
+  id: string;
+  observedAt: string;
+  /** Formatted timestamp shown in the disambiguation list. */
+  label: string;
+  /** Short value preview, e.g. "3.5 mEq/L ↓". */
+  valueDisplay: string;
+  /** Full value snapshot pinned into the token when this draw is chosen. */
+  value: TokenValue;
 }
