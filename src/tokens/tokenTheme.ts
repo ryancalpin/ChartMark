@@ -34,7 +34,10 @@ export const RENDER_MODE: Record<TokenType, TokenRenderMode> = {
   problem: "linked",
   lab: "expandable",
   imaging: "expandable",
-  consult: "expandable",
+  // Consults are link references (hover summary + click-through to the detail
+  // panel), not expandable lab-style values — LinkedToken and DetailSidePanel
+  // both already handle them.
+  consult: "linked",
 };
 
 /** Resolve final colors given type, value, and staleness. */
