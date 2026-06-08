@@ -12,7 +12,9 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  reporter: [["list"]],
+  // `list` for live console output; `html` (never auto-opened) is uploaded as a
+  // CI artifact so failed runs ship their traces/screenshots for debugging.
+  reporter: [["list"], ["html", { open: "never" }]],
   timeout: 30_000,
   expect: { timeout: 7_000 },
   use: {
