@@ -12,6 +12,12 @@ __pycache__/
 .venv/
 audit-service/*.db
 
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
 # Editor / OS
 .DS_Store
 .vscode/*

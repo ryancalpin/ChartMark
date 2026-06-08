@@ -35,9 +35,15 @@ export function buildInitialState(keyRef: MentionKeyHandlerRef): EditorState {
     doc: buildInitialDoc(),
     plugins: [
       history(),
+      // The mention plugin must precede the keymaps: while the @ palette is
+      // open it intercepts Enter/Tab/Arrow/Escape via handleKeyDown, and
+      // ProseMirror queries plugins in array order. If baseKeymap came first it
+      // would claim Enter (split block) before the palette could insert a token.
+      // When the palette is closed the plugin returns false and keys fall
+      // through to the keymaps as normal.
+      createMentionPlugin(keyRef),
       keymap({ "Mod-z": undo, "Mod-y": redo, "Mod-Shift-z": redo }),
       keymap(baseKeymap),
-      createMentionPlugin(keyRef),
       createLockStatePlugin(),
     ],
   });
