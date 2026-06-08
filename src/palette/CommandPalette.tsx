@@ -5,7 +5,7 @@
  * through the key-handler ref the editor wired into the mention plugin.
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useFloating, autoUpdate, offset, flip, shift, FloatingPortal } from "@floating-ui/react";
 import type { EditorView } from "prosemirror-view";
 import type { PaletteCategory, PaletteItem, PaletteVariant } from "../types/palette";
@@ -48,9 +48,13 @@ export function CommandPalette({ view, mention, keyHandlerRef }: Props) {
   const [category, setCategory] = useState<PaletteCategory>("all");
   const [disambig, setDisambig] = useState<PaletteItem | null>(null);
   const [variantSel, setVariantSel] = useState(0);
-  const dismissedQuery = useRef<string | null>(null);
+  // Tracks the query the user dismissed with Escape. Must be state, not a ref:
+  // setting it has to trigger a re-render so the palette actually closes. (A ref
+  // mutation wouldn't, and Escape's setCategory("all") is a no-op when already
+  // on "all" — the common case — so it can't be relied on to force the render.)
+  const [dismissedQuery, setDismissedQuery] = useState<string | null>(null);
 
-  const active = mention.active && ready && dismissedQuery.current !== mention.query;
+  const active = mention.active && ready && dismissedQuery !== mention.query;
 
   const results = useMemo(
     () => (active ? search(mention.query, category) : []),
@@ -98,7 +102,7 @@ export function CommandPalette({ view, mention, keyHandlerRef }: Props) {
   const insert = (item: PaletteItem) => {
     const to = view.state.selection.from;
     insertTokens(view, mention.from, to, item, insertCtx(), mention.query || null);
-    dismissedQuery.current = null;
+    setDismissedQuery(null);
     setDisambig(null);
   };
 
@@ -106,7 +110,7 @@ export function CommandPalette({ view, mention, keyHandlerRef }: Props) {
   const insertVariantValue = (item: PaletteItem, variant: PaletteVariant) => {
     const to = view.state.selection.from;
     insertTokens(view, mention.from, to, item, insertCtx(), mention.query || null, variant.value);
-    dismissedQuery.current = null;
+    setDismissedQuery(null);
     setDisambig(null);
   };
 
@@ -179,7 +183,7 @@ export function CommandPalette({ view, mention, keyHandlerRef }: Props) {
         return true;
       }
       if (e.key === "Escape") {
-        dismissedQuery.current = mention.query;
+        setDismissedQuery(mention.query);
         keyHandlerRef.current = null;
         setCategory("all");
         return true;
