@@ -11,9 +11,12 @@ test.describe("Linked-token detail panel", () => {
     await expect(token).toBeVisible();
     await token.getByRole("button").click();
 
-    await expect(page.getByRole("heading", { name: "Detail" })).toBeVisible();
-    await expect(page.getByText("Heart failure with reduced ejection fraction")).toBeVisible();
-    await expect(page.getByText("I50.22")).toBeVisible(); // ICD-10
+    // Scope to the side panel — the linked token's hover tooltip can echo the
+    // same summary text (notably on WebKit, which keeps :hover after the click).
+    const panel = page.locator("aside");
+    await expect(panel.getByRole("heading", { name: "Detail" })).toBeVisible();
+    await expect(panel.getByText("Heart failure with reduced ejection fraction")).toBeVisible();
+    await expect(panel.getByText("I50.22")).toBeVisible(); // ICD-10
 
     await page.getByRole("button", { name: "close" }).click();
     await expect(page.getByRole("heading", { name: "Detail" })).toBeHidden();
