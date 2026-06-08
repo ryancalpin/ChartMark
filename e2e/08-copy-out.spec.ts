@@ -2,6 +2,10 @@ import { test, expect } from "@playwright/test";
 import { EDITOR, openNote, focusEditorEnd, insertToken } from "./helpers";
 
 test.describe("Copy-out flattens tokens to clean plain text", () => {
+  // Reading the system clipboard via navigator.clipboard + the `clipboard-read`
+  // permission is only reliable on Chromium under Playwright.
+  test.skip(({ browserName }) => browserName !== "chromium", "clipboard read is Chromium-only");
+
   test("selecting all and copying yields prose + token values, no metadata", async ({ page }) => {
     await openNote(page);
     await focusEditorEnd(page);

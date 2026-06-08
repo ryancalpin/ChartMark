@@ -39,9 +39,17 @@ export function useTokenDisplay(attrs: TokenAttrs): TokenDisplay {
   const locked = attrs.lockState === "locked";
   const overridden = attrs.manuallyOverridden;
 
-  // Date tokens roll with the clock while in draft, then freeze at signing.
+  // Effective value precedence: override > locked(signed) > live/draft. The live
+  // hook seeds these at mount, but in-place attr changes (applying an override,
+  // signing) re-render the same component instance without re-seeding its
+  // useState — so prefer the authoritative value from attrs here.
   let value = liveValue;
-  if (attrs.type === "date" && !locked && !overridden && liveValue?.dateKind) {
+  if (overridden && attrs.overrideValue) {
+    value = attrs.overrideValue;
+  } else if (locked && attrs.signedValue) {
+    value = attrs.signedValue;
+  } else if (attrs.type === "date" && liveValue?.dateKind) {
+    // Date tokens roll with the clock while in draft, then freeze at signing.
     value = {
       ...liveValue,
       display: resolveDateToken(liveValue.dateKind, now, chart?.patient.admitDate ?? now.toISOString()),

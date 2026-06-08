@@ -18,10 +18,15 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${PORT}`,
     trace: "on-first-retry",
-    permissions: ["clipboard-read", "clipboard-write"],
   },
   projects: [
-    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    {
+      name: "chromium",
+      // clipboard-read is needed by the copy-out spec and is Chromium-only.
+      use: { ...devices["Desktop Chrome"], permissions: ["clipboard-read", "clipboard-write"] },
+    },
+    { name: "firefox", use: { ...devices["Desktop Firefox"] } },
+    { name: "webkit", use: { ...devices["Desktop Safari"] } },
   ],
   webServer: {
     command: `npm run build && npx vite preview --port ${PORT} --strictPort`,

@@ -64,6 +64,7 @@ Twelve seconds after load, the seeded chart updates potassium (3.1 → 3.6) — 
 | `npm run build`   | Type-check + production build to `dist/`              |
 | `npm run typecheck` | `tsc --noEmit` over the app                         |
 | `npm run smoke`   | Headless assertions over the load-bearing logic       |
+| `npm run test:e2e` | Playwright E2E suite (Chromium/Firefox/WebKit) over the real UI |
 
 ## Architecture
 
